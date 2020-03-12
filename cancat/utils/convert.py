@@ -8,10 +8,10 @@ import re
 
 def cancat2candump(session, output):
     with open(session, 'rb') as f:
-        sess = pickle.load(f)
+        sess = pickle.load(f, fix_imports=True, encoding='bytes')
 
     with open(output, 'w') as f:
-        for msg_time, msg in sess['messages'].get(cancat.CMD_CAN_RECV, None):
+        for msg_time, msg in sess[b'messages'].get(cancat.CMD_CAN_RECV, None):
             line = '({:.6f}) vcan0 {}#{}\n'.format(
                 msg_time,
                 msg[0:4].encode('HEX'),
@@ -25,14 +25,14 @@ def cancat2pcap(session, output):
     import scapy.packet
     import scapy.utils
 
-    sess = pickle.load(session)
+    sess = pickle.load(session, fix_imports=True, encoding='bytes')
 
     msgs = []
-    for msg_time, msg in sess['messages'].get(cancat.CMD_CAN_RECV, None):
+    for msg_time, msg in sess[b'messages'].get(cancat.CMD_CAN_RECV, None):
         arb = struct.unpack_from('>L', msg)[0] | 0x80000000
         msg_data = msg[4:]
         msg_len = len(msg_data)
-        raw = struct.pack('<LL', arb, msg_len) + msg_data + '\x00' * (8 - msg_len)
+        raw = struct.pack('<LL', arb, msg_len) + msg_data + b'\x00' * (8 - msg_len)
 
         pkt = scapy.layers.l2.CookedLinux(
                 pkttype=1,
